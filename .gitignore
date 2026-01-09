@@ -1,8 +1,0 @@
-auth.json
-fastapi
-uvicorn
-playwright
-tweets.txt
-*.png
-__pycache__/
-*.log
