@@ -31,6 +31,8 @@ jobs:
         env:
           # GitHub Secretsに設定した認証情報を環境変数として渡す
           TWITTER_AUTH_JSON: ${{ secrets.TWITTER_AUTH_JSON }}
+          # 既存データのURL (GitHub Pages)
+          EXISTING_DATA_URL: "https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/tweets.txt"
         # TARGET_URL は GitHub の Variables で設定した値を使用します
         run: |
           python twimg.py "${{ vars.TARGET_URL }}"
@@ -39,8 +41,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
+          publish_dir: ./public
           publish_branch: gh-pages
-          keep_files: true # 過去のデータを残しつつ新しいファイルを追加
-          include_files: |
-             tweets.txt
+          keep_files: false # 毎回クリーンな状態で最新のファイルだけを置く
