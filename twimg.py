@@ -5,6 +5,7 @@ import asyncio
 import json
 import requests
 import re
+import random
 
 from playwright.async_api import async_playwright
 
@@ -45,6 +46,16 @@ def load_existing_tweets(file_url):
     except Exception as e:
         print(f"Failed to load existing tweets: {e}")
         return []
+
+async def human_like_behavior(page):
+    """人間らしいランダムな動きをシミュレート"""
+    # ランダムにマウスを動かす
+    x = random.randint(100, 1000)
+    y = random.randint(100, 800)
+    await page.mouse.move(x, y, steps=10)
+    
+    # ほんの少し待機
+    await page.wait_for_timeout(random.randint(500, 1500))
 
 async def scrape_twitter(url: str, scroll_count: int = 5):
     async with async_playwright() as p:
@@ -96,6 +107,10 @@ async def scrape_twitter(url: str, scroll_count: int = 5):
         try:
             print(f"Accessing: {url}")
             await page.goto(url, wait_until="commit", timeout=10000)
+            
+            # 初期待機も少しランダムに
+            await page.wait_for_timeout(random.randint(2000, 4000))
+            
             try:
                 await page.wait_for_selector("article", timeout=15000)
             except:
@@ -107,6 +122,10 @@ async def scrape_twitter(url: str, scroll_count: int = 5):
             for i in range(scroll_count):
                 print(f"Scrolling {i+1}/{scroll_count}...")
                 
+                # スクロール前にマウスを少し動かす
+                await human_like_behavior(page)
+                
+                # --- ツイート抽出処理 ---
                 articles = await page.locator('article[data-testid="tweet"]').all()
                 for article in articles:
                     try:
@@ -130,9 +149,13 @@ async def scrape_twitter(url: str, scroll_count: int = 5):
                             })
                     except Exception as e:
                         continue
-
-                await page.mouse.wheel(0, 2000)
-                await page.wait_for_timeout(2000)
+                
+                # ランダムな量だけスクロール
+                scroll_amount = random.randint(1200, 2500)
+                await page.mouse.wheel(0, scroll_amount)
+                
+                # 待機時間もランダムに (2秒〜4秒)
+                await page.wait_for_timeout(random.randint(2000, 4000))
 
             print(f"Total unique tweets collected in this session: {len(tweets_data)}")
             return tweets_data
