@@ -1,0 +1,46 @@
+name: Daily Twitter Scrape
+
+on:
+  schedule:
+    # 毎日 日本時間 朝9:00 (UTC 0:00) に実行
+    - cron: '0 0 * * *'
+  workflow_dispatch: # GitHubの画面から手動で実行できるようにする
+
+permissions:
+  contents: write # gh-pagesブランチへの書き込み権限
+
+jobs:
+  scrape-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Run Scraper
+        env:
+          # GitHub Secretsに設定した認証情報を環境変数として渡す
+          TWITTER_AUTH_JSON: ${{ secrets.TWITTER_AUTH_JSON }}
+        # TARGET_URL は GitHub の Variables で設定した値を使用します
+        run: |
+          python twimg.py "${{ vars.TARGET_URL }}"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./
+          publish_branch: gh-pages
+          keep_files: true # 過去のデータを残しつつ新しいファイルを追加
+          include_files: |
+             tweets.txt
